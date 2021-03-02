@@ -1,1 +1,6 @@
 import os
+
+KEY_ID = os.environ['APCA_API_KEY_ID']
+SECRET_KEY = os.environ['APCA_API_SECRET_KEY']
+BASE_URL = os.environ['APCA_API_BASE_URL']
+HEADERS = {'APCA-API-KEY-ID': KEY_ID, 'APCA-API-SECRET-KEY': SECRET_KEY}
