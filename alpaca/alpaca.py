@@ -3,6 +3,8 @@ import websocket
 import json
 from threading import Thread
 import time
+import alpaca
+import requests
 
 BASE_URL = os.environ['APCA_API_BASE_URL']
 KEY_ID = os.environ['APCA_API_KEY_ID']
@@ -11,7 +13,6 @@ HEADERS = {'APCA-API-KEY-ID': KEY_ID, 'APCA-API-SECRET-KEY': SECRET_KEY}
 
 class MarketSocket:
     def __init__(self):
-        # websocket.enableTrace(True)
         self.connected = False
         self._open_listeners = []
         self._message_listeners = []
@@ -24,6 +25,9 @@ class MarketSocket:
             on_error = self.on_error,
             on_close = self.on_close
         )
+    
+    def send(self, message):
+        self.ws.send(json.dumps(message))
 
     # listener decorators
     def open_listener(self, func):
@@ -113,3 +117,38 @@ class MarketSocket:
 # the active socket connection
 # note that there may only be one active connection to the alpaca socket at any one time
 alpaca_socket = MarketSocket()
+
+
+# most of the code here is similar except the connection/authentication
+# protocol is different for some reason (poor API design)
+class OrderSocket:
+    def __init__(self):
+        pass
+
+    # attempts to  place an order
+    # returns true if successful, false otherwise
+    # (true does not necessarily mean the order has been filled)
+    def order(self, symbol, quantity, side):
+        response = requests.request(
+            "POST",
+            "https://data.alpaca.markets/v2/stocks/{0}/bars".format(self.symbol),
+            headers=alpaca.HEADERS,
+            params={
+                "symbol": symbol,
+                "qty": quantity,
+                "side": side,
+                "type": "market",
+                "time_in_force": "day"
+            }
+        )
+        if response.status_code == 403:
+            print("Error: Not enough buying power for order")
+            return False
+        elif response.status_code == 422:
+            print("Error: Unprocessable order")
+            return False
+        print("Order placed: {0} {1} {2}".format(side.upper(), quantity, symbol))
+        return True    
+
+
+alpaca_orders = OrderSocket()

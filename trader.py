@@ -2,6 +2,7 @@ from threading import Thread
 import json
 import requests
 import alpaca
+import algorithm
 
 symbol_threads = []
 
@@ -28,10 +29,16 @@ if __name__ == "__main__":
     # open symbol threads for all the positions
     for position in active_positions:
         print("Opening thread for position {0}".format(position["symbol"]))
-        thread = alpaca.SymbolThread(
+        thread = algorithm.SymbolThread(
             symbol=position["symbol"],
             qty=position["qty"],
             avg_entry_price=position["avg_entry_price"]
         )
         thread.start()
         symbol_threads.append(thread)
+
+    # wait for threads to finish
+    for thread in symbol_threads:
+        thread.join()
+    print("All threads terminated")
+    print("Terminating program")
